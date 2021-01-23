@@ -113,3 +113,139 @@ class Flama(Starlette, SchemaMixin):
             return func
 
         return decorator
+
+    def get(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["GET"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def put(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["PUT"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def post(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["POST"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def delete(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["DELETE"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def options(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["OPTIONS"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def head(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["HEAD"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def patch(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["PATCH"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def trace(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["TRACE"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
