@@ -8,7 +8,7 @@ import starlette.routing
 from functools import wraps
 from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
-from starlette.routing import Match, Mount
+from starlette.routing import BaseRoute, Match, Mount
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from flama import http, websockets
@@ -519,3 +519,37 @@ class Router(starlette.routing.Router):
             request_schemas=request_schemas,
         )
 
+
+class APIRouter(Router):
+    def __init__(
+        self,
+        prefix: str = "",
+        name: str = "",
+        components: typing.Optional[typing.List[Component]] = None,
+        routes: typing.Sequence[BaseRoute] = None,
+        redirect_slashes: bool = True,
+        default: ASGIApp = None,
+        on_startup: typing.Sequence[typing.Callable] = None,
+        on_shutdown: typing.Sequence[typing.Callable] = None,
+        lifespan: typing.Callable[[typing.Any], typing.AsyncGenerator] = None,
+        *args,
+        **kwargs
+    ):
+        super().__init__(
+            components=components,
+            routes=routes,
+            redirect_slashes=redirect_slashes,
+            default=default,
+            on_startup=on_startup,
+            on_shutdown=on_shutdown,
+            lifespan=lifespan,
+            *args,
+            **kwargs
+        )
+
+        self.prefix = prefix
+        self.name = name
+
+    def register_router(self, router: 'APIRouter'):
+        assert isinstance(router, APIRouter), "Registered router must be an instance of APIRouter"
+        self.mount(router.prefix, app=router, name=router.name)

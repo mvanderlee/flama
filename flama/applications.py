@@ -12,7 +12,7 @@ from flama.exceptions import HTTPException
 from flama.http import Request, Response
 from flama.injection import Injector
 from flama.responses import APIErrorResponse
-from flama.routing import Router
+from flama.routing import APIRouter, Router
 from flama.schemas import SchemaMixin
 
 if typing.TYPE_CHECKING:
@@ -78,6 +78,10 @@ class Flama(Starlette, SchemaMixin):
 
     def api_http_exception_handler(self, request: Request, exc: HTTPException) -> Response:
         return APIErrorResponse(detail=exc.detail, status_code=exc.status_code, exception=exc)
+
+    def register_router(self, router: APIRouter):
+        assert isinstance(router, APIRouter), "Registered router must be an instance of APIRouter"
+        self.mount(router.prefix, app=router, name=router.name)
 
     def schemas(
         self,
