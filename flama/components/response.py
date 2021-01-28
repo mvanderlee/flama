@@ -13,5 +13,5 @@ class BackgroundTasksComponent(Component):
 
 
 RESPONSE_COMPONENTS = (
-    BackgroundTasksComponent()
+    BackgroundTasksComponent(),
 )

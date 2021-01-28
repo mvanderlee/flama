@@ -21,7 +21,7 @@ from flama.validation import get_output_schema
 if typing.TYPE_CHECKING:
     from flama.resources import BaseResource
 
-__all__ = ["Route", "WebSocketRoute", "Router"]
+__all__ = ["Route", "WebSocketRoute", "Router", "APIRouter"]
 
 logger = logging.getLogger(__name__)
 
