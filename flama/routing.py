@@ -8,7 +8,7 @@ import starlette.routing
 from functools import wraps
 from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
-from starlette.routing import Match, Mount
+from starlette.routing import BaseRoute, Match, Mount
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from flama import http, websockets
@@ -21,7 +21,7 @@ from flama.validation import get_output_schema
 if typing.TYPE_CHECKING:
     from flama.resources import BaseResource
 
-__all__ = ["Route", "WebSocketRoute", "Router"]
+__all__ = ["Route", "WebSocketRoute", "Router", "APIRouter"]
 
 logger = logging.getLogger(__name__)
 
@@ -382,3 +382,174 @@ class Router(starlette.routing.Router):
             return partial, scope
 
         return self.not_found, None
+
+    def get(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["GET"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def put(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["PUT"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def post(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["POST"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def delete(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["DELETE"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def options(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["OPTIONS"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def head(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["HEAD"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def patch(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["PATCH"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+    def trace(
+        self,
+        path: str,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        **request_schemas: typing.Dict[str, marshmallow.Schema]
+    ) -> typing.Callable:
+        return self.route(
+            path=path,
+            methods=["TRACE"],
+            name=name,
+            include_in_schema=include_in_schema,
+            response_schema=response_schema,
+            request_schemas=request_schemas,
+        )
+
+
+class APIRouter(Router):
+    def __init__(
+        self,
+        prefix: str = "",
+        name: str = "",
+        components: typing.Optional[typing.List[Component]] = None,
+        routes: typing.Sequence[BaseRoute] = None,
+        redirect_slashes: bool = True,
+        default: ASGIApp = None,
+        on_startup: typing.Sequence[typing.Callable] = None,
+        on_shutdown: typing.Sequence[typing.Callable] = None,
+        lifespan: typing.Callable[[typing.Any], typing.AsyncGenerator] = None,
+        *args,
+        **kwargs
+    ):
+        super().__init__(
+            components=components,
+            routes=routes,
+            redirect_slashes=redirect_slashes,
+            default=default,
+            on_startup=on_startup,
+            on_shutdown=on_shutdown,
+            lifespan=lifespan,
+            *args,
+            **kwargs
+        )
+
+        self.prefix = prefix
+        self.name = name
+
+    def register_router(self, router: 'APIRouter'):
+        assert isinstance(router, APIRouter), "Registered router must be an instance of APIRouter"
+        self.mount(router.prefix, app=router, name=router.name)
