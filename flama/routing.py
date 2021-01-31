@@ -1,19 +1,20 @@
+import typing
+
 import asyncio
 import inspect
 import logging
-import typing
-from functools import wraps
-
 import marshmallow
 import starlette.routing
+from functools import wraps
 from starlette.concurrency import run_in_threadpool
 from starlette.routing import Match, Mount
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from flama import http, websockets
 from flama.components import Component
-from flama.responses import APIResponse
+from flama.responses import APIResponse, Response
 from flama.types import Field, FieldLocation, HTTPMethod, OptBool, OptFloat, OptInt, OptStr
+from flama.utils import is_marshmallow_dataclass, is_marshmallow_schema
 from flama.validation import get_output_schema
 
 if typing.TYPE_CHECKING:
@@ -93,9 +94,16 @@ class FieldsMixin:
         query_fields: FieldsMap = {}
         path_fields: FieldsMap = {}
         body_field: Field = None
+        request_schemas = getattr(handler, '_request_schemas', None) or {}
+        response_schema = getattr(handler, '_response_schema', None)
 
         # Iterate over all params
         for name, param in self._get_parameters_from_handler(handler, router).items():
+            # If schema override exists, update the parameter's annotation
+            schema_override = request_schemas.get(name)
+            if schema_override:
+                param = param.replace(annotation=schema_override)
+
             if name in ("self", "cls"):
                 continue
             # Matches as path param
@@ -124,10 +132,15 @@ class FieldsMixin:
                     required=required,
                 )
             # Body params
-            elif inspect.isclass(param.annotation) and issubclass(param.annotation, marshmallow.Schema):
+            elif is_marshmallow_schema(param.annotation):
                 body_field = Field(name=name, location=FieldLocation.body, schema=param.annotation())
+            # Handle marshmallow-dataclass
+            elif is_marshmallow_dataclass(param.annotation):
+                body_field = Field(name=name, location=FieldLocation.body, schema=param.annotation.Schema())
 
-        output_field = inspect.signature(handler).return_annotation
+        output_field = response_schema if response_schema else inspect.signature(handler).return_annotation
+        if is_marshmallow_dataclass(output_field):
+            output_field = output_field.Schema
 
         return query_fields, path_fields, body_field, output_field
 
@@ -182,6 +195,10 @@ class Route(starlette.routing.Route, FieldsMixin):
                     response = APIResponse(content=response)
                 elif response is None:
                     response = APIResponse(content="")
+                elif not isinstance(response, Response):
+                    schema = get_output_schema(endpoint)
+                    if schema is not None:
+                        response = APIResponse(content=response, schema=get_output_schema(endpoint))
             except Exception:
                 logger.exception("Error building response")
                 raise
@@ -250,7 +267,23 @@ class Router(starlette.routing.Router):
         methods: typing.List[str] = None,
         name: str = None,
         include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        request_schemas: typing.Dict[str, marshmallow.Schema] = None,
     ):
+        # If @schemas is used, it has precedence
+        # i.e.:
+        # @app.route('/', arg1: FooSchema)
+        # @app.schemas('/', arg2: BarSchema, response_schema=FooBarSchema)
+        # def endpoint(arg1, arg2):
+        #       pass
+        if getattr(endpoint, '_request_schemas', None):
+            merged_schemas = request_schemas.copy()
+            merged_schemas.update(endpoint._request_schemas)
+            endpoint._request_schemas = merged_schemas
+        else:
+            endpoint._request_schemas = request_schemas
+        endpoint._response_schema = response_schema if getattr(endpoint, '_response_schema', None) is None else endpoint._response_schema
+
         self.routes.append(
             Route(path, endpoint=endpoint, methods=methods, name=name, include_in_schema=include_in_schema, router=self)
         )
@@ -278,10 +311,24 @@ class Router(starlette.routing.Router):
         self.routes.append(route)
 
     def route(
-        self, path: str, methods: typing.List[str] = None, name: str = None, include_in_schema: bool = True
+        self,
+        path: str,
+        methods: typing.List[str] = None,
+        name: str = None,
+        include_in_schema: bool = True,
+        response_schema: marshmallow.Schema = None,
+        request_schemas: typing.Dict[str, marshmallow.Schema] = None,
     ) -> typing.Callable:
         def decorator(func: typing.Callable) -> typing.Callable:
-            self.add_route(path, func, methods=methods, name=name, include_in_schema=include_in_schema)
+            self.add_route(
+                path,
+                func,
+                methods=methods,
+                name=name,
+                include_in_schema=include_in_schema,
+                response_schema=response_schema,
+                request_schemas=request_schemas
+            )
             return func
 
         return decorator
