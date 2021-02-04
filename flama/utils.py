@@ -20,7 +20,7 @@ def dict_safe_add(d: typing.Dict, v: typing.Any, *keys):
 
 
 def is_marshmallow_schema(obj):
-    return inspect.isclass(obj) and issubclass(obj, marshmallow.Schema)
+    return (inspect.isclass(obj) and issubclass(obj, marshmallow.Schema)) or isinstance(obj, marshmallow.Schema)
 
 
 def is_marshmallow_dataclass(obj):

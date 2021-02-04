@@ -1,9 +1,9 @@
+import typing
+
 import datetime
 import enum
-import typing
-import uuid
-
 import marshmallow
+import uuid
 
 try:
     from sqlalchemy import Table
@@ -55,6 +55,7 @@ class EndpointInfo(typing.NamedTuple):
     path_fields: typing.Dict[str, Field]
     body_field: Field
     output_field: typing.Any
+    default_status_code: int
 
 
 OptInt = typing.Optional[int]

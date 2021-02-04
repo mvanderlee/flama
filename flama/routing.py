@@ -147,7 +147,7 @@ class FieldsMixin:
 
 
 class Route(starlette.routing.Route, FieldsMixin):
-    def __init__(self, path: str, endpoint: typing.Callable, router: "Router", *args, **kwargs):
+    def __init__(self, path: str, endpoint: typing.Callable, router: "Router", *args, status_code: int = 200, **kwargs):
         super().__init__(path, endpoint=endpoint, **kwargs)
 
         # Replace function with another wrapper that uses the injector
@@ -158,6 +158,7 @@ class Route(starlette.routing.Route, FieldsMixin):
             self.methods = [m for m in HTTPMethod.__members__.keys() if hasattr(self, m.lower())]
 
         self.query_fields, self.path_fields, self.body_field, self.output_field = self._get_fields(router)
+        self.status_code = status_code
 
     def endpoint_wrapper(self, endpoint: typing.Callable) -> ASGIApp:
         """
@@ -184,7 +185,7 @@ class Route(starlette.routing.Route, FieldsMixin):
             try:
                 injected_func = await app.injector.inject(endpoint, state)
                 background_task = next(
-                    (v for k, v in state.items() if k.startswith('backgroundtasks:') and isinstance(v, BackgroundTask)), 
+                    (v for k, v in state.items() if k.startswith('backgroundtasks:') and isinstance(v, BackgroundTask)),
                     None
                 )
 
@@ -195,15 +196,33 @@ class Route(starlette.routing.Route, FieldsMixin):
 
                 # Wrap response data with a proper response class
                 if isinstance(response, (dict, list)):
-                    response = APIResponse(content=response, schema=get_output_schema(endpoint), background=background_task)
+                    response = APIResponse(
+                        content=response,
+                        schema=get_output_schema(endpoint),
+                        background=background_task,
+                        status_code=self.status_code,
+                    )
                 elif isinstance(response, str):
-                    response = APIResponse(content=response, background=background_task)
+                    response = APIResponse(
+                        content=response,
+                        background=background_task,
+                        status_code=self.status_code,
+                    )
                 elif response is None:
-                    response = APIResponse(content="", background=background_task)
+                    response = APIResponse(
+                        content="",
+                        background=background_task,
+                        status_code=self.status_code,
+                    )
                 elif not isinstance(response, Response):
                     schema = get_output_schema(endpoint)
                     if schema is not None:
-                        response = APIResponse(content=response, schema=get_output_schema(endpoint), background=background_task)
+                        response = APIResponse(
+                            content=response,
+                            schema=get_output_schema(endpoint),
+                            background=background_task,
+                            status_code=self.status_code,
+                        )
             except Exception:
                 logger.exception("Error building response")
                 raise
@@ -272,6 +291,7 @@ class Router(starlette.routing.Router):
         methods: typing.List[str] = None,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         request_schemas: typing.Dict[str, marshmallow.Schema] = None,
     ):
@@ -287,10 +307,19 @@ class Router(starlette.routing.Router):
             endpoint._request_schemas = merged_schemas
         else:
             endpoint._request_schemas = request_schemas
-        endpoint._response_schema = response_schema if getattr(endpoint, '_response_schema', None) is None else endpoint._response_schema
+
+        if getattr(endpoint, '_response_schema', None) is None:
+            endpoint._response_schema = response_schema
 
         self.routes.append(
-            Route(path, endpoint=endpoint, methods=methods, name=name, include_in_schema=include_in_schema, router=self)
+            Route(
+                path,
+                endpoint=endpoint,
+                methods=methods, name=name,
+                include_in_schema=include_in_schema,
+                router=self,
+                status_code=status_code
+            )
         )
 
     def add_websocket_route(self, path: str, endpoint: typing.Callable, name: str = None):
@@ -321,6 +350,7 @@ class Router(starlette.routing.Router):
         methods: typing.List[str] = None,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         request_schemas: typing.Dict[str, marshmallow.Schema] = None,
     ) -> typing.Callable:
@@ -331,6 +361,7 @@ class Router(starlette.routing.Router):
                 methods=methods,
                 name=name,
                 include_in_schema=include_in_schema,
+                status_code=status_code,
                 response_schema=response_schema,
                 request_schemas=request_schemas
             )
@@ -388,6 +419,7 @@ class Router(starlette.routing.Router):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -396,6 +428,7 @@ class Router(starlette.routing.Router):
             methods=["GET"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -405,6 +438,7 @@ class Router(starlette.routing.Router):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -413,6 +447,7 @@ class Router(starlette.routing.Router):
             methods=["PUT"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -422,6 +457,7 @@ class Router(starlette.routing.Router):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -430,6 +466,7 @@ class Router(starlette.routing.Router):
             methods=["POST"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -439,6 +476,7 @@ class Router(starlette.routing.Router):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -447,6 +485,7 @@ class Router(starlette.routing.Router):
             methods=["DELETE"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -456,6 +495,7 @@ class Router(starlette.routing.Router):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -464,6 +504,7 @@ class Router(starlette.routing.Router):
             methods=["OPTIONS"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -473,6 +514,7 @@ class Router(starlette.routing.Router):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -481,6 +523,7 @@ class Router(starlette.routing.Router):
             methods=["HEAD"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -490,6 +533,7 @@ class Router(starlette.routing.Router):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -498,6 +542,7 @@ class Router(starlette.routing.Router):
             methods=["PATCH"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -507,6 +552,7 @@ class Router(starlette.routing.Router):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -515,6 +561,7 @@ class Router(starlette.routing.Router):
             methods=["TRACE"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )

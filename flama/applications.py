@@ -101,6 +101,7 @@ class Flama(Starlette, SchemaMixin):
         methods: typing.List[str] = None,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -111,6 +112,7 @@ class Flama(Starlette, SchemaMixin):
                 methods=methods,
                 name=name,
                 include_in_schema=include_in_schema,
+                status_code=status_code,
                 response_schema=response_schema,
                 request_schemas=request_schemas,
             )
@@ -123,6 +125,7 @@ class Flama(Starlette, SchemaMixin):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -131,6 +134,7 @@ class Flama(Starlette, SchemaMixin):
             methods=["GET"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -140,6 +144,7 @@ class Flama(Starlette, SchemaMixin):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -148,6 +153,7 @@ class Flama(Starlette, SchemaMixin):
             methods=["PUT"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -157,6 +163,7 @@ class Flama(Starlette, SchemaMixin):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -165,6 +172,7 @@ class Flama(Starlette, SchemaMixin):
             methods=["POST"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -174,6 +182,7 @@ class Flama(Starlette, SchemaMixin):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -182,6 +191,7 @@ class Flama(Starlette, SchemaMixin):
             methods=["DELETE"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -191,6 +201,7 @@ class Flama(Starlette, SchemaMixin):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -199,6 +210,7 @@ class Flama(Starlette, SchemaMixin):
             methods=["OPTIONS"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -208,6 +220,7 @@ class Flama(Starlette, SchemaMixin):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -216,6 +229,7 @@ class Flama(Starlette, SchemaMixin):
             methods=["HEAD"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -225,6 +239,7 @@ class Flama(Starlette, SchemaMixin):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -233,6 +248,7 @@ class Flama(Starlette, SchemaMixin):
             methods=["PATCH"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )
@@ -242,6 +258,7 @@ class Flama(Starlette, SchemaMixin):
         path: str,
         name: str = None,
         include_in_schema: bool = True,
+        status_code: int = 200,
         response_schema: marshmallow.Schema = None,
         **request_schemas: typing.Dict[str, marshmallow.Schema]
     ) -> typing.Callable:
@@ -250,6 +267,7 @@ class Flama(Starlette, SchemaMixin):
             methods=["TRACE"],
             name=name,
             include_in_schema=include_in_schema,
+            status_code=status_code,
             response_schema=response_schema,
             request_schemas=request_schemas,
         )

@@ -1,17 +1,16 @@
+import typing
+
 import inspect
 import itertools
 import os
-import typing
 from collections import defaultdict
-from string import Template
-
-import marshmallow
 from starlette import routing, schemas
 from starlette.responses import HTMLResponse
+from string import Template
 
 from flama.responses import APIError
 from flama.types import EndpointInfo
-from flama.utils import dict_safe_add
+from flama.utils import dict_safe_add, is_marshmallow_dataclass, is_marshmallow_schema
 
 try:
     import apispec
@@ -119,6 +118,7 @@ class SchemaGenerator(schemas.BaseSchemaGenerator):
                                 path_fields=route.path_fields.get(method, {}),
                                 body_field=route.body_field.get(method),
                                 output_field=route.output_field.get(method),
+                                default_status_code=route.status_code,
                             )
                         )
                 else:
@@ -136,6 +136,7 @@ class SchemaGenerator(schemas.BaseSchemaGenerator):
                                 path_fields=route.path_fields.get(method.upper(), {}),
                                 body_field=route.body_field.get(method.upper()),
                                 output_field=route.output_field.get(method.upper()),
+                                default_status_code=route.status_code,
                             )
                         )
             elif isinstance(route, routing.Mount):
@@ -156,7 +157,7 @@ class SchemaGenerator(schemas.BaseSchemaGenerator):
 
     def _add_endpoint_response(self, endpoint: EndpointInfo, schema: typing.Dict):
         response_codes = list(schema.get("responses", {}).keys())
-        main_response = response_codes[0] if response_codes else 200
+        main_response = endpoint.default_status_code or (response_codes[0] if response_codes else 200)
 
         dict_safe_add(
             schema,
@@ -189,8 +190,8 @@ class SchemaGenerator(schemas.BaseSchemaGenerator):
 
         # Response
         if endpoint.output_field and (
-            (inspect.isclass(endpoint.output_field) and issubclass(endpoint.output_field, marshmallow.Schema))
-            or isinstance(endpoint.output_field, marshmallow.Schema)
+            is_marshmallow_schema(endpoint.output_field)
+            or is_marshmallow_dataclass(endpoint.output_field)
         ):
             self._add_endpoint_response(endpoint, schema)
 
